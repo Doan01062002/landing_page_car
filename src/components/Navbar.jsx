@@ -57,6 +57,19 @@ export default function Navbar({ onOpenBooking }) {
     };
   }, [mobileMenuOpen, searchOpen, updatesOpen]);
 
+  // Keyboard accessibility: Close active modals or drawer on Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setUpdatesOpen(false);
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleLinkClick = () => {
     setMobileMenuOpen(false);
   };
@@ -189,7 +202,7 @@ export default function Navbar({ onOpenBooking }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed inset-x-0 top-[56px] sm:top-[68px] z-35 bg-[#0A0A0C]/98 backdrop-blur-2xl border-b border-white/10 p-5 sm:p-6 shadow-2xl lg:hidden text-white max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain"
+            className="fixed inset-x-0 top-[56px] sm:top-[68px] z-40 bg-[#0A0A0C]/98 backdrop-blur-2xl border-b border-white/10 p-5 sm:p-6 shadow-2xl lg:hidden text-white max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain"
           >
             <div className="flex flex-col space-y-2 mb-5">
               {navLinks.map((link) => (
@@ -257,13 +270,17 @@ export default function Navbar({ onOpenBooking }) {
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+            aria-label="Tìm kiếm dòng xe"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setSearchOpen(false);
+            }}
+            className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4 bg-black/60 backdrop-blur-sm overflow-y-auto cursor-pointer"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-[#FAF9F6] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/60 text-[#0A0A0C] my-auto"
+              className="w-full max-w-lg bg-[#FAF9F6] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/60 text-[#0A0A0C] my-auto cursor-default"
             >
               <div className="flex items-center justify-between pb-3.5 border-b border-[#E7E5E0]">
                 <div className="flex items-center gap-2.5 w-full">
@@ -329,13 +346,17 @@ export default function Navbar({ onOpenBooking }) {
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+            aria-label="Nhật Ký Xưởng Chế Tác"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setUpdatesOpen(false);
+            }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto cursor-pointer"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="w-full max-w-lg bg-[#FAF9F6] rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl border border-white/60 text-[#0A0A0C] my-auto max-h-[calc(100dvh-2rem)] flex flex-col"
+              className="w-full max-w-lg bg-[#FAF9F6] rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl border border-white/60 text-[#0A0A0C] my-auto max-h-[calc(100dvh-2rem)] flex flex-col cursor-default"
             >
               <div className="flex items-center justify-between pb-3.5 border-b border-[#E7E5E0] flex-shrink-0">
                 <div className="flex items-center gap-2.5">

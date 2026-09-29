@@ -8,6 +8,7 @@ class EngineAudioSystem {
     this.oscillators = [];
     this.gainNode = null;
     this.revInterval = null;
+    this.stopTimeout = null;
   }
 
   init() {
@@ -18,14 +19,36 @@ class EngineAudioSystem {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
   }
 
   start(type = 'flat6') {
     this.init();
     if (!this.ctx) return;
-    if (this.isPlaying) return;
+
+    // Clear any pending stop timeout from previous car fade-out
+    if (this.stopTimeout) {
+      clearTimeout(this.stopTimeout);
+      this.stopTimeout = null;
+    }
+
+    // Immediately stop existing oscillators if still active
+    if (this.oscillators.length > 0) {
+      this.oscillators.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch {}
+      });
+      this.oscillators = [];
+    }
+
+    if (this.revInterval) {
+      clearInterval(this.revInterval);
+      this.revInterval = null;
+    }
+
     this.isPlaying = true;
 
     const ctx = this.ctx;
@@ -34,7 +57,7 @@ class EngineAudioSystem {
     // Master volume gain
     this.gainNode = ctx.createGain();
     this.gainNode.gain.setValueAtTime(0.001, now);
-    this.gainNode.gain.exponentialRampToValueAtTime(0.12, now + 0.5);
+    this.gainNode.gain.exponentialRampToValueAtTime(0.12, now + 0.35);
     this.gainNode.connect(ctx.destination);
 
     // Fundamental Engine Frequencies
@@ -100,7 +123,7 @@ class EngineAudioSystem {
   }
 
   stop() {
-    if (!this.isPlaying) return;
+    if (!this.isPlaying && this.oscillators.length === 0) return;
     this.isPlaying = false;
 
     if (this.revInterval) {
@@ -108,21 +131,42 @@ class EngineAudioSystem {
       this.revInterval = null;
     }
 
-    if (this.gainNode && this.ctx) {
-      const now = this.ctx.currentTime;
-      this.gainNode.gain.cancelScheduledValues(now);
-      this.gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-      setTimeout(() => {
-        this.oscillators.forEach((osc) => {
+    if (this.stopTimeout) {
+      clearTimeout(this.stopTimeout);
+      this.stopTimeout = null;
+    }
+
+    const oscsToStop = this.oscillators;
+    this.oscillators = [];
+    const prevGain = this.gainNode;
+    this.gainNode = null;
+
+    if (prevGain && this.ctx) {
+      try {
+        const now = this.ctx.currentTime;
+        prevGain.gain.cancelScheduledValues(now);
+        prevGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+      } catch {}
+
+      this.stopTimeout = setTimeout(() => {
+        oscsToStop.forEach((osc) => {
           try {
             osc.stop();
             osc.disconnect();
-          } catch {
-            // ignore if already stopped
-          }
+          } catch {}
         });
-        this.oscillators = [];
-      }, 350);
+        try {
+          prevGain.disconnect();
+        } catch {}
+        this.stopTimeout = null;
+      }, 280);
+    } else {
+      oscsToStop.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch {}
+      });
     }
   }
 

@@ -249,7 +249,7 @@ export default function Hero() {
       </div>
 
       {/* 4. RESPONSIVE BOTTOM TOOLBAR (Down Arrow + Carousel Indicators + Engine Audio Controls) */}
-      <div className="relative z-30 pointer-events-auto px-4 sm:px-10 lg:px-16 pb-6 sm:pb-8 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+      <div className="relative z-30 pointer-events-auto mt-auto px-4 sm:px-10 lg:px-16 pb-6 sm:pb-8 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
         
         {/* Left: Scroll Down Arrow & Carousel Ticker Dots */}
         <div className="flex items-center gap-4 sm:gap-6 self-start sm:self-center">

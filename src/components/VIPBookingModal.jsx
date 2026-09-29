@@ -24,16 +24,28 @@ export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE 
     }
   }, [initialTier]);
 
-  // Lock body scroll when modal is open
+  // Lock body scroll cleanly when modal is open
   useEffect(() => {
     if (isOpen) {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
+      const prevOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
-        document.body.style.overflow = originalStyle;
+        document.body.style.overflow = prevOverflow === 'hidden' ? '' : prevOverflow;
       };
     }
   }, [isOpen]);
+
+  // Keyboard accessibility: Close VIP modal on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
