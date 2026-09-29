@@ -77,42 +77,42 @@ export default function EngineeringZSplit({ onOpenBooking }) {
   const feed = workshopFeeds[activeFeedIdx];
 
   return (
-    <section id="engineering" className="py-24 sm:py-32 bg-[#0A0A0C] text-white relative overflow-hidden scroll-mt-20 sm:scroll-mt-24">
-      {/* ATMOSPHERIC DYNAMIC AMBIENT BACKLIGHT (Smoothly transitions with active bay) */}
-      <div className="absolute inset-0 pointer-events-none transition-all duration-700">
+    <section id="engineering" className="py-16 sm:py-24 lg:py-32 bg-[#0A0A0C] text-white relative overflow-hidden scroll-mt-16 sm:scroll-mt-24">
+      {/* ATMOSPHERIC DYNAMIC AMBIENT BACKLIGHT */}
+      <div className="absolute inset-0 pointer-events-none transition-all duration-700 overflow-hidden">
         <div
-          className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-gradient-to-b ${feed.glowGradient} blur-[140px] rounded-full opacity-35 transition-all duration-700`}
+          className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-[min(900px,100vw)] h-[min(550px,60vh)] max-w-full bg-gradient-to-b ${feed.glowGradient} blur-[120px] rounded-full opacity-30 transition-all duration-700`}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:48px_48px] opacity-40" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:32px_32px] sm:bg-[size:48px_48px] opacity-40" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* SECTION HEADER: EDITORIAL APEX STATEMENT */}
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-bold tracking-[0.2em] uppercase text-white/90 mb-4 shadow-sm">
-            <Radio size={12} className="text-[#FF424D] animate-pulse" />
-            <span>XƯỞNG CHẾ TÁC APEX • TRỰC TIẾP TỪ WORKSHOP</span>
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-white/90 mb-3 sm:mb-4 shadow-sm">
+            <Radio size={12} className="text-[#FF424D] animate-pulse flex-shrink-0" />
+            <span>XƯỞNG CHẾ TÁC APEX • WORKSHOP</span>
           </div>
 
-          <h2 className="font-display font-[250] text-4xl sm:text-6xl text-white tracking-tight leading-[1.08] mb-5">
+          <h2 className="font-display font-[250] text-3xl sm:text-5xl lg:text-6xl text-white tracking-tight leading-[1.08] mb-4">
             Kỹ sư trưởng. Chủ xe. <br />
             <span className="font-medium italic text-transparent bg-clip-text bg-gradient-to-r from-white via-white/95 to-[#FF424D]">
               Không có người trung gian.
             </span>
           </h2>
 
-          <p className="text-sm sm:text-base text-white/70 font-normal leading-relaxed">
+          <p className="text-xs sm:text-sm md:text-base text-white/70 font-normal leading-relaxed">
             Chúng tôi xóa bỏ hoàn toàn nhân viên sales môi giới. Khách hàng làm việc trực tiếp 1-1 với Kỹ sư trưởng phụ trách dự án, theo dõi quá trình tháo lắp và thử nghiệm Dyno qua camera 4K truyền trực tiếp vào Owner Portal riêng tư.
           </p>
         </div>
 
-        {/* ASYMMETRICAL ATELIER MASTER CONSOLE STAGE */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch max-w-6xl mx-auto mb-12">
+        {/* ASYMMETRICAL CONSOLE STAGE */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-stretch max-w-6xl mx-auto mb-10 sm:mb-12">
           
-          {/* LEFT: 16:9 CINEMA BROADCAST MONITOR (7 Columns) */}
+          {/* LEFT: 16:9 CINEMA MONITOR (7 Columns) */}
           <div className="lg:col-span-7 flex flex-col justify-between">
-            <div className="relative rounded-[24px] sm:rounded-[32px] overflow-hidden border border-white/15 bg-black shadow-[0_20px_60px_rgba(0,0,0,0.8)] h-full flex flex-col justify-between group">
+            <div className="relative rounded-2xl sm:rounded-[32px] overflow-hidden border border-white/15 bg-black shadow-[0_20px_60px_rgba(0,0,0,0.8)] h-full flex flex-col justify-between group">
               
               {/* VIDEO CONTAINER */}
               <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full bg-black overflow-hidden">
@@ -134,21 +134,19 @@ export default function EngineeringZSplit({ onOpenBooking }) {
                       playsInline
                       className="w-full h-full object-cover"
                     />
-                    {/* Cinematic Contrast Vignette */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/60 pointer-events-none" />
                   </motion.div>
                 </AnimatePresence>
-
               </div>
 
               {/* INTEGRATED BOTTOM DESCRIPTION TAPE */}
-              <div className="p-4 sm:p-5 bg-[#0E1015] border-t border-white/10 flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <h4 className="text-xs sm:text-sm font-bold text-white mb-1 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: feed.accentColor }} />
-                    {feed.title}
+              <div className="p-3.5 sm:p-5 bg-[#0E1015] border-t border-white/10 flex items-center justify-between gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs sm:text-sm font-bold text-white mb-0.5 sm:mb-1 flex items-center gap-2 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: feed.accentColor }} />
+                    <span className="truncate">{feed.title}</span>
                   </h4>
-                  <p className="text-xs text-white/70 font-normal leading-relaxed line-clamp-2">
+                  <p className="text-[11px] sm:text-xs text-white/70 font-normal leading-relaxed line-clamp-2">
                     {feed.desc}
                   </p>
                 </div>
@@ -163,7 +161,7 @@ export default function EngineeringZSplit({ onOpenBooking }) {
           </div>
 
           {/* RIGHT: 3-BAY INTERACTIVE COMMAND SELECTOR (5 Columns) */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-3">
+          <div className="lg:col-span-5 flex flex-col justify-between gap-2.5 sm:gap-3">
             {workshopFeeds.map((item, idx) => {
               const Icon = item.icon;
               const isActive = activeFeedIdx === idx;
@@ -172,9 +170,9 @@ export default function EngineeringZSplit({ onOpenBooking }) {
                   key={item.id}
                   type="button"
                   onClick={() => setActiveFeedIdx(idx)}
-                  className={`p-4 sm:p-5 rounded-2xl text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex-1 flex flex-col justify-between ${
+                  className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex-1 flex flex-col justify-between touch-manipulation min-h-[54px] ${
                     isActive
-                      ? 'bg-gradient-to-r from-white/15 to-white/5 border-2 shadow-[0_10px_30px_rgba(0,0,0,0.5)] translate-x-1 sm:translate-x-1.5'
+                      ? 'bg-gradient-to-r from-white/15 to-white/5 border-2 shadow-[0_10px_30px_rgba(0,0,0,0.5)] translate-x-0 sm:translate-x-1'
                       : 'bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20'
                   }`}
                   style={{
@@ -184,17 +182,17 @@ export default function EngineeringZSplit({ onOpenBooking }) {
                   {/* Subtle active glow halo */}
                   {isActive && (
                     <div
-                      className="absolute top-0 right-0 w-28 h-28 blur-2xl rounded-full pointer-events-none opacity-20"
+                      className="absolute top-0 right-0 w-24 h-24 blur-2xl rounded-full pointer-events-none opacity-20"
                       style={{ backgroundColor: item.accentColor }}
                     />
                   )}
 
                   <div>
                     {/* Bay Top Row */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
                         <span
-                          className={`text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded-md ${
+                          className={`text-[9px] sm:text-[10px] font-mono font-bold tracking-wider uppercase px-1.5 sm:px-2 py-0.5 rounded-md ${
                             isActive ? 'text-white' : 'bg-white/10 text-white/60'
                           }`}
                           style={{
@@ -203,32 +201,33 @@ export default function EngineeringZSplit({ onOpenBooking }) {
                         >
                           {item.code}
                         </span>
-                        <span className="text-[11px] font-bold text-white/50 tracking-wider uppercase">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-white/50 tracking-wider uppercase truncate">
                           {item.badge}
                         </span>
                       </div>
 
                       <Icon
-                        size={17}
+                        size={16}
+                        className="flex-shrink-0"
                         style={{ color: isActive ? item.accentColor : 'rgba(255,255,255,0.4)' }}
                       />
                     </div>
 
                     {/* Bay Title */}
-                    <h3 className="font-display font-bold text-sm sm:text-base text-white tracking-tight mb-1.5">
+                    <h3 className="font-display font-bold text-xs sm:text-base text-white tracking-tight mb-1">
                       {item.label}
                     </h3>
 
-                    <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">
+                    <p className="text-[11px] sm:text-xs text-white/60 line-clamp-2 leading-relaxed">
                       {item.desc}
                     </p>
                   </div>
 
                   {/* Bay Bottom Spec Tag */}
-                  <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-white/50">{item.submetric}</span>
-                    <span className="font-bold" style={{ color: isActive ? item.accentColor : 'rgba(255,255,255,0.7)' }}>
-                      {isActive ? '● ĐANG THEO DÕI' : 'CHỌN GÓC XEM →'}
+                  <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] sm:text-[11px] font-mono">
+                    <span className="text-white/50 truncate max-w-[160px] sm:max-w-none">{item.submetric}</span>
+                    <span className="font-bold flex-shrink-0" style={{ color: isActive ? item.accentColor : 'rgba(255,255,255,0.7)' }}>
+                      {isActive ? '● ĐANG XEM' : 'CHỌN GÓC →'}
                     </span>
                   </div>
                 </button>
@@ -239,16 +238,16 @@ export default function EngineeringZSplit({ onOpenBooking }) {
         </div>
 
         {/* ATELIER ASSURANCE PILLARS & VIP ACTION BAR */}
-        <div className="max-w-6xl mx-auto pt-6 border-t border-white/10 flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div className="max-w-6xl mx-auto pt-6 border-t border-white/10 flex flex-col lg:flex-row items-center justify-between gap-5 sm:gap-6">
           {/* Key Assurance Bullet Points */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full lg:w-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 w-full lg:w-auto">
             {[
               'Không qua môi giới sales trung gian ăn hoa hồng',
               'Kiểm tra Dyno đo công suất bánh trước & sau nâng cấp',
               'Camera 4K truyền trực tiếp vào cổng thông tin chủ xe',
               'Xe cứu hộ sàn phẳng VIP đón tận tư gia kín đáo',
             ].map((text, idx) => (
-              <div key={idx} className="flex items-center gap-2.5 text-xs sm:text-sm text-white/85">
+              <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm text-white/85">
                 <CheckCircle2 size={15} className="text-[#FF424D] flex-shrink-0" />
                 <span>{text}</span>
               </div>
@@ -260,7 +259,7 @@ export default function EngineeringZSplit({ onOpenBooking }) {
             <button
               type="button"
               onClick={onOpenBooking}
-              className="w-full lg:w-auto text-flip-btn bg-white hover:bg-white/90 text-[#0A0A0C] px-8 py-4 rounded-full font-bold text-xs sm:text-sm tracking-tight shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full lg:w-auto text-flip-btn bg-white hover:bg-white/90 text-[#0A0A0C] px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-xs sm:text-sm tracking-tight shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[44px] touch-manipulation"
             >
               <span className="label-wrapper" data-label="Đặt lịch tham quan xưởng chế tác">
                 <span className="label-placeholder">Đặt lịch tham quan xưởng chế tác</span>
