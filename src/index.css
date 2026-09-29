@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  :root {
+    --color-canvas: #F7F6F2;
+    --color-canvas-light: #FCFCFD;
+    --color-onyx: #0A0A0C;
+    --color-accent: #FF424D;
+    --color-accent-blue: #0E87EB;
+    --color-muted: #696969;
+    --color-border: #E7E5E0;
+    --font-heading: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-onyx);
+    font-family: var(--font-body);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.045em;
+  }
+}
+
+/* Patreon Text Flip Rollover Animation */
+.text-flip-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-flip-btn .label-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.text-flip-btn .label-wrapper::before,
+.text-flip-btn .label-wrapper::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.text-flip-btn .label-wrapper::before {
+  transform: translateY(0%);
+}
+
+.text-flip-btn .label-wrapper::after {
+  transform: translateY(150%);
+}
+
+.text-flip-btn:hover .label-wrapper::before {
+  transform: translateY(-150%);
+}
+
+.text-flip-btn:hover .label-wrapper::after {
+  transform: translateY(0%);
+}
+
+.text-flip-btn .label-placeholder {
+  opacity: 0;
+  pointer-events: none;
+  line-height: 1.1;
+}
+
+/* Optical Exclusion Typography Mode (Patreon Signature) */
+.mix-exclusion {
+  mix-blend-mode: exclusion;
+}
+
+/* Hydra Mesh Gradients for Floating Components Canvas */
+.hydra-aurora-bg {
+  background-color: #94bbff;
+  background-image: 
+    radial-gradient(97% 87% at 66% 76%, rgba(212, 243, 255, 0.4) -10%, rgba(212, 243, 255, 0.1) 40%, rgba(212, 243, 255, 0) 60%),
+    radial-gradient(80% 89% at 120% 68%, rgba(113, 160, 255, 0.8) 0%, rgba(113, 160, 255, 0) 80%),
+    radial-gradient(149% 149% at -54% -125%, rgba(113, 160, 255, 1) 0%, rgba(113, 160, 255, 1) 70%, rgba(113, 160, 255, 0) 95%),
+    linear-gradient(-27deg, rgba(212, 243, 255, 0) 0%, rgba(212, 243, 255, 0) 70%, rgba(212, 243, 255, 0.6) 110%),
+    radial-gradient(48% 43% at 33% 106%, rgba(180, 215, 255, 1) 0%, rgba(180, 215, 255, 0) 100%);
+}
+
+/* Custom Smooth Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F7F6F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4D2CD;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0A0A0C;
+}
+
+/* Infinite Marquee Animation */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-infinite {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 45s linear infinite;
+}
+
+.animate-marquee-infinite:hover {
+  animation-play-state: paused;
+}
+
+/* Hardware Acceleration */
+.hardware-accel {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
