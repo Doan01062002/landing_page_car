@@ -28,3 +28,4 @@ edge_profile/
 verification_screenshots/
 .env
 .env.local
+.agents/

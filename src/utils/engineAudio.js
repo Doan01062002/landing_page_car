@@ -9,6 +9,8 @@ class EngineAudioSystem {
     this.gainNode = null;
     this.revInterval = null;
     this.stopTimeout = null;
+    this.pendingStopOscs = [];
+    this.pendingGain = null;
   }
 
   init() {
@@ -31,6 +33,23 @@ class EngineAudioSystem {
     if (this.stopTimeout) {
       clearTimeout(this.stopTimeout);
       this.stopTimeout = null;
+    }
+
+    // Immediately stop and disconnect pending oscillators from previous stop() so they never leak
+    if (this.pendingStopOscs.length > 0) {
+      this.pendingStopOscs.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch {}
+      });
+      this.pendingStopOscs = [];
+    }
+    if (this.pendingGain) {
+      try {
+        this.pendingGain.disconnect();
+      } catch {}
+      this.pendingGain = null;
     }
 
     // Immediately stop existing oscillators if still active
@@ -122,8 +141,8 @@ class EngineAudioSystem {
     }, 2800);
   }
 
-  stop() {
-    if (!this.isPlaying && this.oscillators.length === 0) return;
+  stop(immediate = false) {
+    if (!this.isPlaying && this.oscillators.length === 0 && this.pendingStopOscs.length === 0) return;
     this.isPlaying = false;
 
     if (this.revInterval) {
@@ -136,38 +155,69 @@ class EngineAudioSystem {
       this.stopTimeout = null;
     }
 
+    // Terminate any previous pending oscillators first
+    if (this.pendingStopOscs.length > 0) {
+      this.pendingStopOscs.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch {}
+      });
+      this.pendingStopOscs = [];
+    }
+    if (this.pendingGain) {
+      try {
+        this.pendingGain.disconnect();
+      } catch {}
+      this.pendingGain = null;
+    }
+
     const oscsToStop = this.oscillators;
     this.oscillators = [];
     const prevGain = this.gainNode;
     this.gainNode = null;
 
-    if (prevGain && this.ctx) {
-      try {
-        const now = this.ctx.currentTime;
-        prevGain.gain.cancelScheduledValues(now);
-        prevGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-      } catch {}
-
-      this.stopTimeout = setTimeout(() => {
-        oscsToStop.forEach((osc) => {
-          try {
-            osc.stop();
-            osc.disconnect();
-          } catch {}
-        });
-        try {
-          prevGain.disconnect();
-        } catch {}
-        this.stopTimeout = null;
-      }, 280);
-    } else {
+    if (immediate || !prevGain || !this.ctx) {
       oscsToStop.forEach((osc) => {
         try {
           osc.stop();
           osc.disconnect();
         } catch {}
       });
+      if (prevGain) {
+        try {
+          prevGain.disconnect();
+        } catch {}
+      }
+      return;
     }
+
+    // Smooth fade-out with guaranteed cleanup
+    this.pendingStopOscs = oscsToStop;
+    this.pendingGain = prevGain;
+
+    try {
+      const now = this.ctx.currentTime;
+      prevGain.gain.cancelScheduledValues(now);
+      prevGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    } catch {}
+
+    this.stopTimeout = setTimeout(() => {
+      this.pendingStopOscs.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch {}
+      });
+      this.pendingStopOscs = [];
+      if (this.pendingGain) {
+        try {
+          this.pendingGain.disconnect();
+        } catch {}
+        this.pendingGain = null;
+      }
+      this.stopTimeout = null;
+    }, 280);
   }
 
   makeDistortionCurve(amount = 20) {

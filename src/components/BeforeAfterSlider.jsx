@@ -34,6 +34,21 @@ export default function BeforeAfterSlider() {
     };
   }, []);
 
+  // Fail-safe global pointerup/cancel listener to prevent stuck dragging state
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleGlobalPointerUp = () => {
+      setIsDragging(false);
+      rectRef.current = null;
+    };
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    window.addEventListener('pointercancel', handleGlobalPointerUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp);
+      window.removeEventListener('pointercancel', handleGlobalPointerUp);
+    };
+  }, [isDragging]);
+
   const handlePointerDown = (e) => {
     if (!containerRef.current) return;
     rectRef.current = containerRef.current.getBoundingClientRect();

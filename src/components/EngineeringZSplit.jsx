@@ -122,10 +122,20 @@ export default function EngineeringZSplit({ onOpenBooking }) {
                     initial={{ opacity: 0, scale: 1.02 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute inset-0 w-full h-full"
                   >
                     <video
+                      key={feed.id}
+                      ref={(el) => {
+                        if (el) {
+                          el.muted = true;
+                          el.defaultMuted = true;
+                          if (el.paused) {
+                            el.play().catch(() => {});
+                          }
+                        }
+                      }}
                       src={feed.videoUrl}
                       poster={feed.poster}
                       autoPlay

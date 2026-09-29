@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Lenis from 'lenis';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -14,6 +14,7 @@ import VIPBookingModal from './components/VIPBookingModal';
 export default function App() {
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState('STAGE II');
+  const lenisRef = useRef(null);
 
   // Initialize Lenis Smooth Inertia Scroll (Patreon standard)
   useEffect(() => {
@@ -25,18 +26,33 @@ export default function App() {
       wheelMultiplier: 1,
       touchMultiplier: 2,
     });
+    lenisRef.current = lenis;
 
+    let rafId = null;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, []);
+
+  // Synchronize Lenis with modal state to prevent background wheel scroll
+  useEffect(() => {
+    if (lenisRef.current) {
+      if (bookingModalOpen) {
+        lenisRef.current.stop();
+      } else {
+        lenisRef.current.start();
+      }
+    }
+  }, [bookingModalOpen]);
 
   const handleOpenBookingWithTier = (tierName) => {
     setSelectedTier(tierName || 'STAGE II');

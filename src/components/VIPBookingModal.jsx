@@ -82,6 +82,7 @@ export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE 
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 15 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        data-lenis-prevent
         className="relative w-full max-w-lg bg-[#FCFCFA] text-[#0A0A0C] rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-[0_25px_70px_rgba(0,0,0,0.35)] border border-[#E5E5DE] my-auto z-10 max-h-[calc(100dvh-1.5rem)] flex flex-col"
       >
         {/* Close Button */}
@@ -95,7 +96,7 @@ export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE 
         </button>
 
         {/* Scrollable Container Inside Card */}
-        <div className="overflow-y-auto overscroll-contain pr-1 -mr-1">
+        <div data-lenis-prevent className="overflow-y-auto overscroll-contain pr-1 -mr-1">
           {!isSuccess ? (
             <div>
               {/* Header: Short, Direct & Premium */}
@@ -172,7 +173,7 @@ export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE 
                           type="button"
                           key={pkg.id}
                           onClick={() => setSelectedTier(pkg.id)}
-                          className={`p-2 sm:p-2.5 rounded-xl border text-left transition-colors cursor-pointer flex flex-col justify-between ${
+                          className={`p-1.5 sm:p-2.5 rounded-xl border text-left transition-colors cursor-pointer flex flex-col justify-between min-w-0 ${
                             isSelected
                               ? 'bg-white border-[#0A0A0C] ring-1 ring-[#0A0A0C] shadow-xs'
                               : 'bg-[#F4F4F0] border-[#DFDFD6] hover:border-[#C8C8BE]'

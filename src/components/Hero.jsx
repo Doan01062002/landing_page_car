@@ -9,6 +9,7 @@ export default function Hero() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const activeVideoRef = useRef(null);
   const currentCar = heroSupercars[activeIndex];
+  const prevCarIdRef = useRef(currentCar.id);
 
   const getAudioTypeForCar = (carId) => {
     if (carId === 'ferrari-f8' || carId === 'g63-amg') return 'v8';
@@ -39,19 +40,21 @@ export default function Hero() {
     });
   }, []);
 
-  // Update engine audio when car changes if audio is playing
+  // Update engine audio when car changes IF audio is playing (without double-start churn)
   useEffect(() => {
-    if (isPlayingAudio) {
-      engineAudio.stop();
-      const type = getAudioTypeForCar(currentCar.id);
-      engineAudio.start(type);
+    if (prevCarIdRef.current !== currentCar.id) {
+      prevCarIdRef.current = currentCar.id;
+      if (isPlayingAudio) {
+        const type = getAudioTypeForCar(currentCar.id);
+        engineAudio.start(type);
+      }
     }
-  }, [activeIndex, isPlayingAudio, currentCar.id]);
+  }, [currentCar.id, isPlayingAudio]);
 
   // Clean up audio on unmount
   useEffect(() => {
     return () => {
-      engineAudio.stop();
+      engineAudio.stop(true);
     };
   }, []);
 
@@ -118,7 +121,7 @@ export default function Hero() {
   }, [handleNext]);
 
   return (
-    <section className="relative w-full h-screen min-h-[600px] overflow-hidden bg-[#0A0A0C] flex flex-col justify-between">
+    <section className="relative w-full h-[100dvh] min-h-[min(100dvh,600px)] overflow-hidden bg-[#0A0A0C] flex flex-col justify-between">
       {/* 1. FULL-BLEED CINEMATIC SUPERCAR VIDEO BACKGROUND */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#0A0A0C]">
         <AnimatePresence mode="popLayout">
@@ -179,7 +182,7 @@ export default function Hero() {
       </button>
 
       {/* 3. SIGNATURE DIAGONAL ASYMMETRICAL TYPOGRAPHY */}
-      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between pt-24 sm:pt-32 lg:pt-36 pb-24 sm:pb-28 lg:pb-32 px-4 sm:px-10 lg:px-16 select-none">
+      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between pt-14 sm:pt-20 lg:pt-32 pb-14 sm:pb-20 lg:pb-30 px-4 sm:px-10 lg:px-16 select-none">
         
         {/* TOP-LEFT ANCHOR */}
         <div className="text-left max-w-4xl">
@@ -197,7 +200,7 @@ export default function Hero() {
                   y: { duration: 1.3, ease: [0.25, 0.1, 0.25, 1] },
                 }}
               >
-                <h1 className="mix-blend-exclusion text-white font-sans font-[200] text-3xl sm:text-6xl md:text-7xl lg:text-[7.5rem] xl:text-[9rem] tracking-[-0.05em] leading-[0.92] break-words">
+                <h1 className="mix-blend-exclusion text-white font-sans font-[200] text-2xl sm:text-5xl md:text-6xl lg:text-[7.5rem] xl:text-[9rem] tracking-[-0.05em] leading-[0.92] break-words">
                   {currentCar.tagline}
                 </h1>
               </motion.div>
@@ -222,7 +225,7 @@ export default function Hero() {
                   y: { duration: 1.3, ease: [0.25, 0.1, 0.25, 1], delay: 0.15 },
                 }}
               >
-                <h1 className="mix-blend-exclusion text-white font-sans font-[200] text-3xl sm:text-6xl md:text-7xl lg:text-[7.5rem] xl:text-[9rem] tracking-[-0.05em] leading-[0.92] text-right break-words">
+                <h1 className="mix-blend-exclusion text-white font-sans font-[200] text-2xl sm:text-5xl md:text-6xl lg:text-[7.5rem] xl:text-[9rem] tracking-[-0.05em] leading-[0.92] text-right break-words">
                   {currentCar.taglineSub}
                 </h1>
               </motion.div>

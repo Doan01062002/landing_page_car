@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Phone, Menu, X, ArrowUpRight, Sparkles, Bell } from 'lucide-react';
+import { Search, Phone, Menu, X, ArrowUpRight, Sparkles, Bell, ArrowRight, Gauge } from 'lucide-react';
+import { heroSupercars, commissionsList } from '../data/supercars';
 
 export default function Navbar({ onOpenBooking }) {
   const [scrolled, setScrolled] = useState(false);
@@ -8,6 +9,41 @@ export default function Navbar({ onOpenBooking }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [updatesOpen, setUpdatesOpen] = useState(false);
+
+  // Dynamic search results across master supercar catalogue
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    
+    const heroes = heroSupercars.map((car) => ({
+      id: car.id,
+      title: car.modelName,
+      subtitle: car.discipline,
+      specs: `${car.hp} • ${car.zeroHundred}`,
+      tag: 'SIÊU XE ATELIER',
+      image: car.posterUrl,
+      brand: car.modelName.split(' ')[0],
+    }));
+
+    const commissions = commissionsList.map((comm) => ({
+      id: comm.id,
+      title: comm.projectName,
+      subtitle: comm.carModel,
+      specs: comm.specs,
+      tag: comm.stage,
+      image: comm.image,
+      brand: comm.carModel.split(' ')[0],
+    }));
+
+    return [...heroes, ...commissions].filter(
+      (item) =>
+        item.title.toLowerCase().includes(q) ||
+        item.subtitle.toLowerCase().includes(q) ||
+        item.specs.toLowerCase().includes(q) ||
+        item.tag.toLowerCase().includes(q) ||
+        item.brand.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
 
   const navLinks = [
     { id: 'commissions', label: 'Dự án Độc bản', href: '#commissions' },
@@ -79,8 +115,8 @@ export default function Navbar({ onOpenBooking }) {
       {/* FLOATING RESPONSIVE NAVBAR */}
       <header
         className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
-          scrolled
-            ? 'py-2.5 sm:py-3 bg-[#0A0A0C]/90 backdrop-blur-md border-b border-white/10 shadow-lg'
+          scrolled || mobileMenuOpen
+            ? 'py-2.5 sm:py-3 bg-[#0A0A0C]/95 backdrop-blur-md border-b border-white/10 shadow-lg'
             : 'py-4 sm:py-6 bg-transparent'
         }`}
       >
@@ -194,15 +230,16 @@ export default function Navbar({ onOpenBooking }) {
         </div>
       </header>
 
-      {/* Mobile Drawer Menu (Touch-optimized, safe scrollable container) */}
+      {/* Mobile Drawer Menu (Touch-optimized, safe scrollable container anchored cleanly below header) */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed inset-x-0 top-[56px] sm:top-[68px] z-40 bg-[#0A0A0C]/98 backdrop-blur-2xl border-b border-white/10 p-5 sm:p-6 shadow-2xl lg:hidden text-white max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain"
+            data-lenis-prevent
+            className="fixed inset-x-0 top-[65px] sm:top-[73px] z-40 bg-[#0A0A0C]/98 backdrop-blur-2xl border-b border-white/10 p-5 sm:p-6 shadow-2xl lg:hidden text-white max-h-[calc(100dvh-4.25rem)] overflow-y-auto overscroll-contain"
           >
             <div className="flex flex-col space-y-2 mb-5">
               {navLinks.map((link) => (
@@ -280,9 +317,10 @@ export default function Navbar({ onOpenBooking }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-[#FAF9F6] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/60 text-[#0A0A0C] my-auto cursor-default"
+              data-lenis-prevent
+              className="w-full max-w-lg bg-[#FAF9F6] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/60 text-[#0A0A0C] my-auto cursor-default flex flex-col max-h-[calc(100dvh-5rem)]"
             >
-              <div className="flex items-center justify-between pb-3.5 border-b border-[#E7E5E0]">
+              <div className="flex items-center justify-between pb-3.5 border-b border-[#E7E5E0] flex-shrink-0">
                 <div className="flex items-center gap-2.5 w-full">
                   <Search size={17} className="text-[#7A7873] flex-shrink-0" />
                   <input
@@ -293,37 +331,112 @@ export default function Navbar({ onOpenBooking }) {
                     autoFocus
                     className="w-full text-sm font-medium focus:outline-none placeholder:text-[#A09E96] bg-transparent"
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="p-1 text-xs text-[#7A7873] hover:text-[#0A0A0C] cursor-pointer"
+                      title="Xóa tìm kiếm"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
                 </div>
                 <button
                   onClick={() => setSearchOpen(false)}
-                  className="p-1.5 rounded-full hover:bg-[#EAE8E2] text-[#7A7873] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                  className="p-1.5 rounded-full hover:bg-[#EAE8E2] text-[#7A7873] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center flex-shrink-0 ml-1"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="py-4">
-                <span className="text-[11px] uppercase tracking-wider font-semibold text-[#A09E96] block mb-2">
-                  Dự án phổ biến được tìm kiếm
-                </span>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {['Porsche 911 GT3', 'Ferrari F8 N-Largo', 'G63 Forged Carbon', 'Inconel Exhaust', 'Brembo Carbon Ceramic'].map(
-                    (tag, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setSearchQuery(tag);
-                        }}
-                        className="text-xs px-3 py-1.5 rounded-full bg-white hover:bg-[#EAE8E2] text-[#0A0A0C] font-medium border border-[#E7E5E0] transition-colors cursor-pointer touch-manipulation"
-                      >
-                        {tag}
-                      </button>
-                    )
+              {/* SEARCH RESULTS OR POPULAR TAGS */}
+              {searchQuery.trim() ? (
+                <div className="py-3 overflow-y-auto overscroll-contain flex-1" data-lenis-prevent>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] uppercase tracking-wider font-semibold text-[#A09E96]">
+                      Kết quả tìm kiếm ({searchResults.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="text-xs text-[#FF424D] hover:underline cursor-pointer"
+                    >
+                      Xóa bộ lọc
+                    </button>
+                  </div>
+
+                  {searchResults.length > 0 ? (
+                    <div className="space-y-2 pr-1">
+                      {searchResults.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            setSearchOpen(false);
+                            onOpenBooking();
+                          }}
+                          className="flex items-center gap-3 p-2.5 rounded-xl bg-white hover:bg-[#F0EEEA] border border-[#E7E5E0] transition-colors cursor-pointer group text-left"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-[#0A0A0C]"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-[#FF424D] bg-[#FF424D]/10 px-1.5 py-0.5 rounded">
+                                {item.tag}
+                              </span>
+                              <span className="text-[10px] text-[#7A7873] truncate">{item.subtitle}</span>
+                            </div>
+                            <h5 className="font-bold text-xs sm:text-sm text-[#0A0A0C] truncate group-hover:text-[#FF424D] transition-colors">
+                              {item.title}
+                            </h5>
+                            <span className="text-[10px] sm:text-[11px] text-[#505050] font-mono block truncate">
+                              {item.specs}
+                            </span>
+                          </div>
+                          <div className="flex-shrink-0 text-[#7A7873] group-hover:text-[#FF424D] transition-colors">
+                            <ArrowRight size={15} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center text-[#7A7873]">
+                      <p className="text-xs mb-1.5">
+                        Không tìm thấy dòng xe phù hợp với <strong className="text-[#0A0A0C]">"{searchQuery}"</strong>.
+                      </p>
+                      <p className="text-[11px] text-[#A09E96] max-w-xs mx-auto">
+                        APEX Studio nhận chế tác độc bản mọi dòng siêu xe theo yêu cầu riêng của chủ xe.
+                      </p>
+                    </div>
                   )}
                 </div>
-              </div>
+              ) : (
+                <div className="py-4 flex-shrink-0">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#A09E96] block mb-2">
+                    Dự án phổ biến được tìm kiếm
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                    {['Porsche 911 GT3', 'Ferrari F8 N-Largo', 'G63 Forged Carbon', 'Inconel Exhaust', 'Brembo Carbon Ceramic'].map(
+                      (tag, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setSearchQuery(tag);
+                          }}
+                          className="text-xs px-3 py-1.5 rounded-full bg-white hover:bg-[#EAE8E2] text-[#0A0A0C] font-medium border border-[#E7E5E0] transition-colors cursor-pointer touch-manipulation"
+                        >
+                          {tag}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
 
-              <div className="pt-3 border-t border-[#E7E5E0] flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-[#7A7873]">
+              <div className="pt-3 border-t border-[#E7E5E0] flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-[#7A7873] flex-shrink-0">
                 <span>Nhấn ESC để đóng</span>
                 <button
                   onClick={() => {
@@ -356,6 +469,7 @@ export default function Navbar({ onOpenBooking }) {
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              data-lenis-prevent
               className="w-full max-w-lg bg-[#FAF9F6] rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl border border-white/60 text-[#0A0A0C] my-auto max-h-[calc(100dvh-2rem)] flex flex-col cursor-default"
             >
               <div className="flex items-center justify-between pb-3.5 border-b border-[#E7E5E0] flex-shrink-0">
