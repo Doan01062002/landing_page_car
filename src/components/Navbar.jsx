@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Phone, Menu, X, ArrowUpRight, Sparkles, Bell, ArrowRight, Gauge } from 'lucide-react';
 import { heroSupercars, commissionsList } from '../data/supercars';
 
-export default function Navbar({ onOpenBooking }) {
+export default function Navbar({ onOpenBooking, onModalStateChange }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [updatesOpen, setUpdatesOpen] = useState(false);
+  const searchModalRef = useRef(null);
+  const updatesModalRef = useRef(null);
 
   // Dynamic search results across master supercar catalogue
   const searchResults = useMemo(() => {
@@ -81,9 +83,11 @@ export default function Navbar({ onOpenBooking }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Prevent background scroll when mobile menu or modal is open
+  // Prevent background scroll and notify parent to pause Lenis when mobile menu or modal is open
   useEffect(() => {
-    if (mobileMenuOpen || searchOpen || updatesOpen) {
+    const isAnyOpen = mobileMenuOpen || searchOpen || updatesOpen;
+    onModalStateChange?.(isAnyOpen);
+    if (isAnyOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -91,23 +95,73 @@ export default function Navbar({ onOpenBooking }) {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [mobileMenuOpen, searchOpen, updatesOpen]);
+  }, [mobileMenuOpen, searchOpen, updatesOpen, onModalStateChange]);
 
-  // Keyboard accessibility: Close active modals or drawer on Escape
+  // Keyboard accessibility: Close active modals or drawer on Escape, strictly trap focus inside modals
   useEffect(() => {
+    // Auto-focus first interactive element for updates modal
+    let focusTimer = null;
+    if (updatesOpen && updatesModalRef.current) {
+      focusTimer = setTimeout(() => {
+        const firstBtn = updatesModalRef.current?.querySelector('button');
+        firstBtn?.focus();
+      }, 50);
+    }
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setSearchOpen(false);
         setUpdatesOpen(false);
         setMobileMenuOpen(false);
+      } else if (e.key === 'Tab') {
+        const activeModalRef = searchOpen ? searchModalRef : updatesOpen ? updatesModalRef : null;
+        if (activeModalRef?.current) {
+          const focusables = Array.from(
+            activeModalRef.current.querySelectorAll(
+              'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+          );
+          if (focusables.length > 0) {
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (!activeModalRef.current.contains(document.activeElement)) {
+              e.preventDefault();
+              first.focus();
+            } else if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    return () => {
+      if (focusTimer) clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [searchOpen, updatesOpen]);
 
   const handleLinkClick = () => {
     setMobileMenuOpen(false);
+  };
+
+  const handleSelectSearchResult = (item) => {
+    setSearchOpen(false);
+    const normalizedBrand = ['Porsche', 'Ferrari', 'Lamborghini'].includes(item.brand)
+      ? item.brand
+      : item.brand?.includes('Mercedes') || item.brand?.includes('AMG') || item.brand?.includes('G63')
+      ? 'Mercedes-AMG'
+      : 'Khác';
+
+    onOpenBooking?.({
+      brand: normalizedBrand,
+      model: item.title,
+      tier: item.tag?.includes('Stage III') || item.tag?.includes('Bespoke') ? 'STAGE III' : 'STAGE II',
+    });
   };
 
   return (
@@ -308,12 +362,14 @@ export default function Navbar({ onOpenBooking }) {
             role="dialog"
             aria-modal="true"
             aria-label="Tìm kiếm dòng xe"
+            data-lenis-prevent
             onClick={(e) => {
               if (e.target === e.currentTarget) setSearchOpen(false);
             }}
             className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4 bg-black/60 backdrop-blur-sm overflow-y-auto cursor-pointer"
           >
             <motion.div
+              ref={searchModalRef}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -328,6 +384,14 @@ export default function Navbar({ onOpenBooking }) {
                     placeholder="Tìm: Porsche GT3, Ferrari F8, G63..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (searchResults.length > 0) {
+                          handleSelectSearchResult(searchResults[0]);
+                        }
+                      }
+                    }}
                     autoFocus
                     className="w-full text-sm font-medium focus:outline-none placeholder:text-[#A09E96] bg-transparent"
                   />
@@ -371,10 +435,7 @@ export default function Navbar({ onOpenBooking }) {
                       {searchResults.map((item) => (
                         <div
                           key={item.id}
-                          onClick={() => {
-                            setSearchOpen(false);
-                            onOpenBooking();
-                          }}
+                          onClick={() => handleSelectSearchResult(item)}
                           className="flex items-center gap-3 p-2.5 rounded-xl bg-white hover:bg-[#F0EEEA] border border-[#E7E5E0] transition-colors cursor-pointer group text-left"
                         >
                           <img
@@ -441,7 +502,7 @@ export default function Navbar({ onOpenBooking }) {
                 <button
                   onClick={() => {
                     setSearchOpen(false);
-                    onOpenBooking();
+                    onOpenBooking?.({ tier: 'STAGE II' });
                   }}
                   className="text-[#0A0A0C] font-semibold underline underline-offset-2 cursor-pointer"
                 >
@@ -460,12 +521,14 @@ export default function Navbar({ onOpenBooking }) {
             role="dialog"
             aria-modal="true"
             aria-label="Nhật Ký Xưởng Chế Tác"
+            data-lenis-prevent
             onClick={(e) => {
               if (e.target === e.currentTarget) setUpdatesOpen(false);
             }}
             className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto cursor-pointer"
           >
             <motion.div
+              ref={updatesModalRef}
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -523,7 +586,7 @@ export default function Navbar({ onOpenBooking }) {
                 <button
                   onClick={() => {
                     setUpdatesOpen(false);
-                    onOpenBooking();
+                    onOpenBooking?.({ tier: 'STAGE II' });
                   }}
                   className="px-3.5 sm:px-4 py-2 rounded-full bg-[#0A0A0C] text-white text-xs font-semibold hover:bg-[#202024] transition-all cursor-pointer min-h-[38px]"
                 >

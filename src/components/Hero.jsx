@@ -97,16 +97,25 @@ export default function Hero() {
     };
   }, [activeIndex, handleNext]);
 
-  // Resume video playback when tab becomes visible again
+  // Resume video & audio playback when tab becomes visible again, suspend when hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && activeVideoRef.current && activeVideoRef.current.paused && !activeVideoRef.current.ended) {
-        activeVideoRef.current.play().catch(() => {});
+      if (document.hidden) {
+        if (isPlayingAudio) {
+          engineAudio.suspend();
+        }
+      } else {
+        if (activeVideoRef.current && activeVideoRef.current.paused && !activeVideoRef.current.ended) {
+          activeVideoRef.current.play().catch(() => {});
+        }
+        if (isPlayingAudio) {
+          engineAudio.resume();
+        }
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [isPlayingAudio]);
 
   const handleVideoEnded = useCallback((e) => {
     if (e.currentTarget === activeVideoRef.current) {

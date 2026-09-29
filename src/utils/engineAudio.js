@@ -129,6 +129,14 @@ class EngineAudioSystem {
       osc2.frequency.cancelScheduledValues(t);
       filter.frequency.cancelScheduledValues(t);
 
+      // Anchor current values at t to ensure smooth glitch-free exponential ramps
+      const v1 = Math.max(0.001, osc1.frequency.value || baseFreq);
+      const v2 = Math.max(0.001, osc2.frequency.value || baseFreq * 2);
+      const vf = Math.max(0.001, filter.frequency.value || 450);
+      osc1.frequency.setValueAtTime(v1, t);
+      osc2.frequency.setValueAtTime(v2, t);
+      filter.frequency.setValueAtTime(vf, t);
+
       // Rev up
       osc1.frequency.exponentialRampToValueAtTime(revTarget, t + 0.4);
       osc2.frequency.exponentialRampToValueAtTime(revTarget * 2, t + 0.4);
@@ -139,6 +147,18 @@ class EngineAudioSystem {
       osc2.frequency.exponentialRampToValueAtTime(baseFreq * 2, t + 1.2);
       filter.frequency.exponentialRampToValueAtTime(450, t + 1.2);
     }, 2800);
+  }
+
+  suspend() {
+    if (this.ctx && this.ctx.state === 'running') {
+      this.ctx.suspend().catch(() => {});
+    }
+  }
+
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
   }
 
   stop(immediate = false) {

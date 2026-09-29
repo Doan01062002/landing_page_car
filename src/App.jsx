@@ -13,7 +13,12 @@ import VIPBookingModal from './components/VIPBookingModal';
 
 export default function App() {
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
-  const [selectedTier, setSelectedTier] = useState('STAGE II');
+  const [navbarModalOpen, setNavbarModalOpen] = useState(false);
+  const [bookingOptions, setBookingOptions] = useState({
+    tier: 'STAGE II',
+    brand: 'Porsche',
+    model: '',
+  });
   const lenisRef = useRef(null);
 
   // Initialize Lenis Smooth Inertia Scroll (Patreon standard)
@@ -46,23 +51,48 @@ export default function App() {
   // Synchronize Lenis with modal state to prevent background wheel scroll
   useEffect(() => {
     if (lenisRef.current) {
-      if (bookingModalOpen) {
+      if (bookingModalOpen || navbarModalOpen) {
         lenisRef.current.stop();
       } else {
         lenisRef.current.start();
       }
     }
-  }, [bookingModalOpen]);
+  }, [bookingModalOpen, navbarModalOpen]);
 
-  const handleOpenBookingWithTier = (tierName) => {
-    setSelectedTier(tierName || 'STAGE II');
+  const handleOpenBooking = (options = {}) => {
+    if (typeof options === 'string') {
+      setBookingOptions({ tier: options, brand: 'Porsche', model: '' });
+    } else {
+      setBookingOptions({
+        tier: options.tier || 'STAGE II',
+        brand: options.brand || 'Porsche',
+        model: options.model || '',
+      });
+    }
     setBookingModalOpen(true);
+  };
+
+  const handleSelectCommissionProject = (project) => {
+    const rawBrand = project.carModel ? project.carModel.split(' ')[0] : 'Khác';
+    const normalizedBrand = ['Porsche', 'Ferrari', 'Lamborghini'].includes(rawBrand)
+      ? rawBrand
+      : rawBrand.includes('Mercedes') || rawBrand.includes('AMG') || rawBrand.includes('G63')
+      ? 'Mercedes-AMG'
+      : 'Khác';
+    handleOpenBooking({
+      brand: normalizedBrand,
+      model: `${project.carModel} (${project.projectName})`,
+      tier: 'STAGE III',
+    });
   };
 
   return (
     <div className="relative min-h-screen bg-[#F7F6F2] text-[#0A0A0C] flex flex-col selection:bg-[#0A0A0C] selection:text-white">
       {/* STICKY NAVBAR */}
-      <Navbar onOpenBooking={() => handleOpenBookingWithTier('STAGE II')} />
+      <Navbar
+        onOpenBooking={handleOpenBooking}
+        onModalStateChange={setNavbarModalOpen}
+      />
 
       {/* MAIN CONTENT LANDING SECTIONS */}
       <main className="flex-1 w-full">
@@ -70,7 +100,7 @@ export default function App() {
         <Hero />
 
         {/* 2. STAGGERED 3-TIER COMMISSIONS TICKER */}
-        <CommissionsTicker onSelectProject={() => handleOpenBookingWithTier('STAGE III')} />
+        <CommissionsTicker onSelectProject={handleSelectCommissionProject} />
 
         {/* 3. FULLSCREEN EDITORIAL MANIFESTO QUOTE */}
         <EngineerManifesto />
@@ -79,23 +109,25 @@ export default function App() {
         <BeforeAfterSlider />
 
         {/* 5. Z-PATTERN ENGINEERING CRAFTSMANSHIP & VIDEO */}
-        <EngineeringZSplit onOpenBooking={() => handleOpenBookingWithTier('STAGE II')} />
+        <EngineeringZSplit onOpenBooking={() => handleOpenBooking({ tier: 'STAGE II' })} />
 
         {/* 6. BESPOKE SERVICE TIERS & COMMISSIONS */}
-        <BespokePrograms onSelectTier={handleOpenBookingWithTier} />
+        <BespokePrograms onSelectTier={(tier) => handleOpenBooking({ tier })} />
 
         {/* 7. HIGH-CONVERSION CTA WHITE PILL CARD */}
-        <CTASection onOpenBooking={() => handleOpenBookingWithTier('STAGE III')} />
+        <CTASection onOpenBooking={() => handleOpenBooking({ tier: 'STAGE III' })} />
       </main>
 
       {/* 8. MODULAR ATELIER FOOTER & WORKSHOPS */}
-      <Footer onOpenBooking={() => handleOpenBookingWithTier('STAGE II')} />
+      <Footer onOpenBooking={() => handleOpenBooking({ tier: 'STAGE II' })} />
 
       {/* VIP BOOKING & INSPECTION MODAL */}
       <VIPBookingModal
         isOpen={bookingModalOpen}
         onClose={() => setBookingModalOpen(false)}
-        initialTier={selectedTier}
+        initialTier={bookingOptions.tier}
+        initialBrand={bookingOptions.brand}
+        initialModel={bookingOptions.model}
       />
     </div>
   );

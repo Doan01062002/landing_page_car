@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Car, User, Phone, CheckCircle2, Shield, Sparkles } from 'lucide-react';
 
@@ -10,19 +10,30 @@ const PACKAGES = [
   { id: 'STAGE III', label: 'Stage III • Độc Bản', desc: 'Bespoke 1-of-1 toàn diện' },
 ];
 
-export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE II' }) {
-  const [selectedBrand, setSelectedBrand] = useState('Porsche');
-  const [modelName, setModelName] = useState('');
-  const [selectedTier, setSelectedTier] = useState(initialTier);
+export default function VIPBookingModal({
+  isOpen,
+  onClose,
+  initialTier = 'STAGE II',
+  initialBrand = 'Porsche',
+  initialModel = '',
+}) {
+  const [selectedBrand, setSelectedBrand] = useState(initialBrand || 'Porsche');
+  const [modelName, setModelName] = useState(initialModel || '');
+  const [selectedTier, setSelectedTier] = useState(initialTier || 'STAGE II');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const cardRef = useRef(null);
 
+  // Synchronize state when modal opens or initial props change
   useEffect(() => {
-    if (initialTier) {
-      setSelectedTier(initialTier);
+    if (isOpen) {
+      if (initialTier) setSelectedTier(initialTier);
+      if (initialBrand) setSelectedBrand(initialBrand);
+      if (initialModel !== undefined) setModelName(initialModel);
+      setIsSuccess(false);
     }
-  }, [initialTier]);
+  }, [isOpen, initialTier, initialBrand, initialModel]);
 
   // Lock body scroll cleanly when modal is open
   useEffect(() => {
@@ -35,16 +46,49 @@ export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE 
     }
   }, [isOpen]);
 
-  // Keyboard accessibility: Close VIP modal on Escape
+  // Keyboard accessibility: Close VIP modal on Escape and strictly trap focus on Tab
   useEffect(() => {
     if (!isOpen) return;
+
+    // Focus first focusable element when modal opens
+    const focusTimer = setTimeout(() => {
+      if (cardRef.current) {
+        const input = cardRef.current.querySelector('input');
+        const firstBtn = cardRef.current.querySelector('button');
+        (input || firstBtn)?.focus();
+      }
+    }, 50);
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose();
+      } else if (e.key === 'Tab' && cardRef.current) {
+        const focusables = Array.from(
+          cardRef.current.querySelectorAll(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusables.length > 0) {
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (!cardRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+          } else if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -65,6 +109,10 @@ export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE 
       role="dialog"
       aria-modal="true"
       aria-labelledby="vip-modal-title"
+      data-lenis-prevent
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain"
     >
       {/* Translucent cinematic dark backdrop */}
@@ -78,6 +126,7 @@ export default function VIPBookingModal({ isOpen, onClose, initialTier = 'STAGE 
 
       {/* Luxury Editorial Porcelain / Alabaster Light Modal Card */}
       <motion.div
+        ref={cardRef}
         initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 15 }}
