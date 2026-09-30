@@ -4,32 +4,43 @@ import { heroSupercars } from '../data/supercars';
 
 export default function Hero() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeVideoRef = useRef(null);
+  const videoRefs = useRef([]);
   const currentCar = heroSupercars[activeIndex];
 
   const handlePrev = useCallback(() => {
-    if (activeVideoRef.current) {
-      try {
-        activeVideoRef.current.pause();
-      } catch {}
-    }
-    setActiveIndex((prev) => {
-      const nextIdx = prev === 0 ? heroSupercars.length - 1 : prev - 1;
-      return nextIdx;
-    });
+    setActiveIndex((prev) => (prev === 0 ? heroSupercars.length - 1 : prev - 1));
   }, []);
 
   const handleNext = useCallback(() => {
-    if (activeVideoRef.current) {
-      try {
-        activeVideoRef.current.pause();
-      } catch {}
-    }
-    setActiveIndex((prev) => {
-      const nextIdx = prev === heroSupercars.length - 1 ? 0 : prev + 1;
-      return nextIdx;
-    });
+    setActiveIndex((prev) => (prev === heroSupercars.length - 1 ? 0 : prev + 1));
   }, []);
+
+  // Handle active video playback and seamless crossfade
+  useEffect(() => {
+    const activeVideo = videoRefs.current[activeIndex];
+    if (activeVideo) {
+      try {
+        activeVideo.currentTime = 0;
+      } catch {}
+      const playPromise = activeVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {});
+      }
+    }
+
+    // Pause non-active videos after crossfade completes (1.2s) to preserve mobile resources
+    const timer = setTimeout(() => {
+      videoRefs.current.forEach((vid, idx) => {
+        if (idx !== activeIndex && vid && !vid.paused) {
+          try {
+            vid.pause();
+          } catch {}
+        }
+      });
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [activeIndex]);
 
   // Auto-advance safety fallback: only advances if video stalls or fails to play
   useEffect(() => {
@@ -44,7 +55,8 @@ export default function Hero() {
           scheduleTimer(3000);
           return;
         }
-        if (activeVideoRef.current && !activeVideoRef.current.paused && !activeVideoRef.current.ended) {
+        const activeVid = videoRefs.current[activeIndex];
+        if (activeVid && !activeVid.paused && !activeVid.ended) {
           scheduleTimer(3000);
           return;
         }
@@ -63,63 +75,62 @@ export default function Hero() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        if (activeVideoRef.current && activeVideoRef.current.paused && !activeVideoRef.current.ended) {
-          activeVideoRef.current.play().catch(() => {});
+        const activeVideo = videoRefs.current[activeIndex];
+        if (activeVideo && activeVideo.paused && !activeVideo.ended) {
+          activeVideo.play().catch(() => {});
         }
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  const handleVideoEnded = useCallback((e) => {
-    if (e.currentTarget === activeVideoRef.current) {
-      handleNext();
-    }
-  }, [handleNext]);
-
-  const handleVideoError = useCallback((e) => {
-    if (e.currentTarget === activeVideoRef.current) {
-      handleNext();
-    }
-  }, [handleNext]);
+  }, [activeIndex]);
 
   return (
     <section className="relative w-full h-[100dvh] min-h-[min(100dvh,600px)] overflow-hidden bg-[#0A0A0C] flex flex-col justify-between">
-      {/* 1. FULL-BLEED CINEMATIC SUPERCAR VIDEO BACKGROUND */}
+      {/* 1. FULL-BLEED CINEMATIC SUPERCAR VIDEO BACKGROUND (Seamless Multi-Video Crossfade) */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#0A0A0C]">
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={currentCar.id}
-            initial={{ opacity: 0, scale: 1.04 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 w-full h-full"
-          >
-            <video
-              key={currentCar.id}
-              ref={(el) => {
-                if (el) {
-                  activeVideoRef.current = el;
-                  if (el.paused) {
-                    el.play().catch(() => {});
+        {heroSupercars.map((car, idx) => {
+          const isActive = idx === activeIndex;
+          return (
+            <div
+              key={car.id}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+                isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+              }`}
+            >
+              <video
+                ref={(el) => {
+                  if (el) {
+                    el.muted = true;
+                    el.defaultMuted = true;
+                    videoRefs.current[idx] = el;
+                    if (idx === 0 && el.paused) {
+                      el.play().catch(() => {});
+                    }
                   }
-                }
-              }}
-              src={currentCar.videoUrl}
-              poster={currentCar.posterUrl}
-              autoPlay
-              muted
-              playsInline
-              onEnded={handleVideoEnded}
-              onError={handleVideoError}
-              className="w-full h-full object-cover"
-            />
-            {/* Atmospheric gradient keeping video balanced for optical exclusion */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/35 pointer-events-none" />
-          </motion.div>
-        </AnimatePresence>
+                }}
+                src={car.videoUrl}
+                autoPlay={idx === 0}
+                muted
+                playsInline
+                preload="auto"
+                onEnded={() => {
+                  if (idx === activeIndex) {
+                    handleNext();
+                  }
+                }}
+                onError={() => {
+                  if (idx === activeIndex) {
+                    handleNext();
+                  }
+                }}
+                className="w-full h-full object-cover"
+              />
+              {/* Atmospheric gradient keeping video balanced for optical exclusion */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/35 pointer-events-none" />
+            </div>
+          );
+        })}
       </div>
 
       {/* 2. NAVIGATION ARROWS (Touch-friendly & responsive positioning) */}
