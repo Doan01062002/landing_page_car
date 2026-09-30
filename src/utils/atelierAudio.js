@@ -1,5 +1,5 @@
-// Web Audio API & Speech Synthesis Luxury Atelier Soundscape for APEX Studio
-// Blends minimalist cinematic ambient music with a sophisticated studio voiceover monologue.
+// Web Audio API & VieNeu-TTS v3 Turbo Studio Voiceover for APEX Atelier
+// Blends authentic VieNeu-TTS Vietnamese narration with minimalist luxury ambient soundtrack.
 
 class AtelierAudioSystem {
   constructor() {
@@ -12,12 +12,10 @@ class AtelierAudioSystem {
     this.chordInterval = null;
     this.filterNode = null;
     this.currentChordIndex = 0;
-    this.isMuted = false;
     this.onCaptionCallback = null;
-    this.speechUtterance = null;
+    this.vieneuAudio = null;
     this.speechTimeout = null;
-    this.speechQueue = [];
-    this.currentSpeechIndex = 0;
+    this.subsequentStep = 0;
   }
 
   // Pre-composed luxury chord progressions (Warm, contemplative, cinematic minor 9ths)
@@ -34,27 +32,15 @@ class AtelierAudioSystem {
     ];
   }
 
-  // Narratives for the professional voiceover
-  get narrationLines() {
+  // Vietnamese follow-up narratives
+  get followUpLines() {
     return [
       {
-        en: "Welcome to APEX Bespoke Atelier.",
-        vi: "Chào mừng quý khách đến với APEX Bespoke Atelier.",
-        duration: 3800
-      },
-      {
-        en: "Where raw automotive engineering transcends into haute couture.",
-        vi: "Nơi cơ khí chính xác hòa quyện cùng nghệ thuật chế tác đỉnh cao.",
+        text: "Từng đường nét tôi luyện thủ công. Từng xung nhịp động cơ đạt đến độ hoàn mỹ.",
         duration: 5200
       },
       {
-        en: "Every contour sculpted by hand. Every heartbeat calibrated to perfection.",
-        vi: "Từng đường nét tôi luyện thủ công. Từng xung nhịp động cơ đạt độ hoàn hảo.",
-        duration: 5600
-      },
-      {
-        en: "Crafted not for the crowd... but for the one.",
-        vi: "Không tạo tác cho số đông... Chỉ dành riêng cho một chủ nhân độc bản.",
+        text: "Không tạo tác cho số đông... Chỉ dành riêng cho một chủ nhân độc bản.",
         duration: 4800
       }
     ];
@@ -72,7 +58,6 @@ class AtelierAudioSystem {
     }
   }
 
-  // Register listener for real-time speech subtitles/captions in UI
   setCaptionListener(cb) {
     this.onCaptionCallback = cb;
   }
@@ -83,6 +68,7 @@ class AtelierAudioSystem {
 
     this.stop(true);
     this.isPlaying = true;
+    this.subsequentStep = 0;
 
     const ctx = this.ctx;
     const now = ctx.currentTime;
@@ -90,27 +76,28 @@ class AtelierAudioSystem {
     // 1. Master Output Gain
     this.masterGain = ctx.createGain();
     this.masterGain.gain.setValueAtTime(0.0001, now);
-    this.masterGain.gain.exponentialRampToValueAtTime(0.35, now + 1.8);
+    this.masterGain.gain.exponentialRampToValueAtTime(0.32, now + 1.5);
     this.masterGain.connect(ctx.destination);
 
     // 2. Cinematic Music Bus
     this.musicGain = ctx.createGain();
-    this.musicGain.gain.setValueAtTime(0.7, now);
+    // Duck slightly during intro narration
+    this.musicGain.gain.setValueAtTime(0.38, now);
     this.musicGain.connect(this.masterGain);
 
     // 3. Warm Velvet Lowpass Filter
     this.filterNode = ctx.createBiquadFilter();
     this.filterNode.type = 'lowpass';
-    this.filterNode.frequency.setValueAtTime(420, now);
+    this.filterNode.frequency.setValueAtTime(400, now);
     this.filterNode.Q.setValueAtTime(1.8, now);
     this.filterNode.connect(this.musicGain);
 
-    // Filter breathing LFO (gives alive, breathing cinematic pad feel)
+    // Slow ambient breathing LFO
     const lfo = ctx.createOscillator();
     const lfoGain = ctx.createGain();
     lfo.type = 'sine';
-    lfo.frequency.setValueAtTime(0.07, now); // Slow 14-second breathing cycle
-    lfoGain.gain.setValueAtTime(180, now);
+    lfo.frequency.setValueAtTime(0.07, now);
+    lfoGain.gain.setValueAtTime(160, now);
     lfo.connect(lfoGain);
     lfoGain.connect(this.filterNode.frequency);
     lfo.start(now);
@@ -120,15 +107,14 @@ class AtelierAudioSystem {
     this.currentChordIndex = 0;
     this.playChord(this.chords[this.currentChordIndex], true);
 
-    // Cycle chords every 6.5 seconds smoothly
     this.chordInterval = setInterval(() => {
       if (!this.isPlaying || !this.ctx) return;
       this.currentChordIndex = (this.currentChordIndex + 1) % this.chords.length;
       this.playChord(this.chords[this.currentChordIndex], false);
     }, 6500);
 
-    // 5. Trigger Professional Studio Voiceover
-    this.startVoiceover();
+    // 5. Play authentic VieNeu-TTS v3 Turbo studio voiceover
+    this.playVieNeuVoiceover();
   }
 
   playChord(chord, isInitial = false) {
@@ -136,7 +122,6 @@ class AtelierAudioSystem {
     const ctx = this.ctx;
     const now = ctx.currentTime;
 
-    // Fade out previous pad oscillators cleanly
     const prevOscs = this.padOscillators;
     const prevSub = this.subOscillator;
     this.padOscillators = [];
@@ -147,14 +132,14 @@ class AtelierAudioSystem {
         try {
           gain.gain.cancelScheduledValues(now);
           gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), now);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
           setTimeout(() => {
             try {
               osc.stop();
               osc.disconnect();
               gain.disconnect();
             } catch {}
-          }, 2400);
+          }, 2200);
         } catch {}
       });
     }
@@ -163,43 +148,41 @@ class AtelierAudioSystem {
       try {
         prevSub.gain.gain.cancelScheduledValues(now);
         prevSub.gain.gain.setValueAtTime(Math.max(0.0001, prevSub.gain.gain.value), now);
-        prevSub.gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
+        prevSub.gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
         setTimeout(() => {
           try {
             prevSub.osc.stop();
             prevSub.osc.disconnect();
             prevSub.gain.disconnect();
           } catch {}
-        }, 2200);
+        }, 2000);
       } catch {}
     }
 
-    // Spawn Sub-bass Drone
+    // Sub-bass Drone
     const subOsc = ctx.createOscillator();
     const subGain = ctx.createGain();
     subOsc.type = 'sine';
     subOsc.frequency.setValueAtTime(chord.root, now);
     subGain.gain.setValueAtTime(0.0001, now);
-    subGain.gain.exponentialRampToValueAtTime(0.18, now + 1.5);
+    subGain.gain.exponentialRampToValueAtTime(0.16, now + 1.5);
     subOsc.connect(subGain);
     subGain.connect(this.musicGain);
     subOsc.start(now);
     this.subOscillator = { osc: subOsc, gain: subGain };
 
-    // Spawn Pad Harmonic Layers (Smooth triangle & detuned sine for shimmer)
+    // Harmonic Layers
     chord.notes.forEach((freq, idx) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      // Alternate waveform for warm acoustic depth
       osc.type = idx % 2 === 0 ? 'triangle' : 'sine';
-      // Subtle micro-detuning (+/- 3 cents) gives analog acoustic warmth
       const detuneCents = (idx - 2) * 2.5;
       osc.detune.setValueAtTime(detuneCents, now);
       osc.frequency.setValueAtTime(freq, now);
 
       gain.gain.setValueAtTime(0.0001, now);
-      const targetGain = 0.08 / Math.sqrt(idx + 1);
+      const targetGain = 0.07 / Math.sqrt(idx + 1);
       gain.gain.exponentialRampToValueAtTime(targetGain, now + 1.8);
 
       osc.connect(gain);
@@ -210,74 +193,140 @@ class AtelierAudioSystem {
     });
   }
 
-  // Voiceover monologue controller
-  startVoiceover() {
-    this.currentSpeechIndex = 0;
-    this.playNextNarrationLine();
+  // Play the authentic VieNeu-TTS v3 Turbo 48kHz studio audio
+  playVieNeuVoiceover() {
+    try {
+      if (this.vieneuAudio) {
+        this.vieneuAudio.pause();
+        this.vieneuAudio = null;
+      }
+
+      const audio = new Audio('/audio/apex_vieneu_master.wav');
+      audio.volume = 0.95;
+      this.vieneuAudio = audio;
+
+      const masterCaption = "Chào mừng quý khách đến với APEX Bespoke Atelier. Nơi kỹ thuật cơ khí đỉnh cao hòa quyện cùng nghệ thuật chế tác độc bản.";
+
+      if (this.onCaptionCallback) {
+        this.onCaptionCallback({
+          vi: masterCaption,
+          en: "Welcome to APEX Bespoke Atelier. Where haute engineering meets fine art."
+        });
+      }
+
+      audio.onended = () => {
+        if (!this.isPlaying) return;
+        
+        // Restore music volume smoothly
+        if (this.musicGain && this.ctx) {
+          const now = this.ctx.currentTime;
+          this.musicGain.gain.cancelScheduledValues(now);
+          this.musicGain.gain.linearRampToValueAtTime(0.65, now + 1.0);
+        }
+
+        // Clear initial caption after a gentle delay
+        if (this.onCaptionCallback) {
+          this.onCaptionCallback(null);
+        }
+
+        // Schedule follow-up narration
+        this.speechTimeout = setTimeout(() => {
+          this.playFollowUpNarration();
+        }, 2200);
+      };
+
+      audio.onerror = () => {
+        // Fallback to speech synthesis if audio file cannot be loaded
+        this.speakWithTTS(masterCaption, () => {
+          this.speechTimeout = setTimeout(() => {
+            this.playFollowUpNarration();
+          }, 2000);
+        });
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // If browser restricts unmuted playback, fallback gracefully
+          this.speakWithTTS(masterCaption, () => {
+            this.speechTimeout = setTimeout(() => {
+              this.playFollowUpNarration();
+            }, 2000);
+          });
+        });
+      }
+    } catch {
+      // In case of error, continue music smoothly
+      if (this.musicGain && this.ctx) {
+        const now = this.ctx.currentTime;
+        this.musicGain.gain.linearRampToValueAtTime(0.65, now + 1.0);
+      }
+    }
   }
 
-  playNextNarrationLine() {
+  playFollowUpNarration() {
     if (!this.isPlaying) return;
 
-    if (this.currentSpeechIndex >= this.narrationLines.length) {
-      // Narration completed; keep music playing softly and notify caption cleared
+    if (this.subsequentStep >= this.followUpLines.length) {
       if (this.onCaptionCallback) {
         this.onCaptionCallback(null);
       }
       return;
     }
 
-    const line = this.narrationLines[this.currentSpeechIndex];
+    const line = this.followUpLines[this.subsequentStep];
+    this.speakWithTTS(line.text, () => {
+      this.subsequentStep += 1;
+      this.speechTimeout = setTimeout(() => {
+        this.playFollowUpNarration();
+      }, 2400);
+    });
+  }
 
-    // Check Speech Synthesis availability
+  speakWithTTS(text, onDone) {
+    if (!this.isPlaying) return;
+
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
 
-      // Ducks music slightly while speech is playing for professional studio mix
+      // Duck music
       if (this.musicGain && this.ctx) {
         const now = this.ctx.currentTime;
         this.musicGain.gain.cancelScheduledValues(now);
         this.musicGain.gain.linearRampToValueAtTime(0.35, now + 0.4);
       }
 
-      const utterance = new SpeechSynthesisUtterance(line.en);
-      this.speechUtterance = utterance;
-
-      // Select best studio-grade narrator voice available
+      const utterance = new SpeechSynthesisUtterance(text);
       const voices = window.speechSynthesis.getVoices();
-      const preferredVoice = voices.find(
+      
+      // Look for natural Vietnamese voices (Microsoft HoaiMy, NamMinh, Google Tiếng Việt)
+      const viVoice = voices.find(
         (v) =>
-          (v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Studio') || v.name.includes('Ryan') || v.name.includes('Daniel') || v.name.includes('Guy'))) ||
-          v.lang.includes('en-GB') ||
-          v.lang.includes('en-US')
-      ) || voices.find((v) => v.lang.startsWith('en')) || voices[0];
+          v.lang.includes('vi') ||
+          v.name.includes('HoaiMy') ||
+          v.name.includes('NamMinh') ||
+          v.name.includes('Vietnamese')
+      );
 
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
+      if (viVoice) {
+        utterance.voice = viVoice;
       }
-
-      utterance.pitch = 0.88; // Deep, calm, authoritative luxury tone
-      utterance.rate = 0.86;  // Measured, cinematic pacing
+      utterance.lang = 'vi-VN';
+      utterance.pitch = 0.9;
+      utterance.rate = 0.88;
       utterance.volume = 0.95;
 
-      // Notify UI of active spoken caption
       if (this.onCaptionCallback) {
-        this.onCaptionCallback(line);
+        this.onCaptionCallback({ vi: text });
       }
 
       const advance = () => {
-        // Bring music back up gently
         if (this.musicGain && this.ctx && this.isPlaying) {
           const now = this.ctx.currentTime;
           this.musicGain.gain.cancelScheduledValues(now);
-          this.musicGain.gain.linearRampToValueAtTime(0.7, now + 0.8);
+          this.musicGain.gain.linearRampToValueAtTime(0.65, now + 0.8);
         }
-
-        this.currentSpeechIndex += 1;
-        // Pause 1.8s between lines for cinematic contemplation
-        this.speechTimeout = setTimeout(() => {
-          this.playNextNarrationLine();
-        }, 1800);
+        if (onDone) onDone();
       };
 
       utterance.onend = advance;
@@ -285,57 +334,48 @@ class AtelierAudioSystem {
 
       window.speechSynthesis.speak(utterance);
     } else {
-      // Fallback if browser lacks speech synthesis: display captions timed with audio
       if (this.onCaptionCallback) {
-        this.onCaptionCallback(line);
+        this.onCaptionCallback({ vi: text });
       }
       this.speechTimeout = setTimeout(() => {
-        this.currentSpeechIndex += 1;
-        this.playNextNarrationLine();
-      }, line.duration);
+        if (onDone) onDone();
+      }, 4500);
     }
   }
 
-  // Trigger brief vehicle-specific bespoke announcement when changing cars
   announceCar(car) {
-    if (!this.isPlaying || !('speechSynthesis' in window)) return;
-    
-    // Brief bespoke line for car
-    const carAnnouncements = {
-      'porsche-gt3': 'Porsche 911 GT3. Weissach Aerodynamic Package.',
-      'ferrari-f8': 'Ferrari F8 Tributo. Twin-Turbo Italian Symphony.',
-      'g63-amg': 'Mercedes-AMG G63. Bespoke Armored Elegance.'
+    if (!this.isPlaying) return;
+
+    const carTexts = {
+      'porsche-gt3': 'Porsche 911 GT3. Gói khí động học Weissach thuần khiết trên đường đua.',
+      'ferrari-f8': 'Ferrari F8 Tributo. Bản giao hưởng V8 Twin-Turbo đỉnh cao nước Ý.',
+      'g63-amg': 'Mercedes-AMG G63. Biểu tượng uy quyền và sang trọng độc bản.'
     };
 
-    const text = carAnnouncements[car.id] || car.modelName;
+    const text = carTexts[car.id] || car.modelName;
 
-    // Speak announcement softly over music
-    window.speechSynthesis.cancel();
     if (this.speechTimeout) clearTimeout(this.speechTimeout);
+    if (this.vieneuAudio) {
+      try {
+        this.vieneuAudio.pause();
+      } catch {}
+    }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find((v) => v.lang.startsWith('en')) || voices[0];
-    if (preferredVoice) utterance.voice = preferredVoice;
-    utterance.pitch = 0.88;
-    utterance.rate = 0.9;
-    utterance.volume = 0.85;
-
-    if (this.onCaptionCallback) {
-      this.onCaptionCallback({ en: text, vi: car.modelName });
+    this.speakWithTTS(text, () => {
       setTimeout(() => {
         if (this.isPlaying && this.onCaptionCallback) {
           this.onCaptionCallback(null);
         }
-      }, 3500);
-    }
-
-    window.speechSynthesis.speak(utterance);
+      }, 3000);
+    });
   }
 
   suspend() {
     if (this.ctx && this.ctx.state === 'running') {
       this.ctx.suspend().catch(() => {});
+    }
+    if (this.vieneuAudio && !this.vieneuAudio.paused) {
+      this.vieneuAudio.pause();
     }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.pause();
@@ -345,6 +385,9 @@ class AtelierAudioSystem {
   resume() {
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
+    }
+    if (this.vieneuAudio && this.vieneuAudio.paused && this.isPlaying) {
+      this.vieneuAudio.play().catch(() => {});
     }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.resume();
@@ -362,6 +405,14 @@ class AtelierAudioSystem {
     if (this.speechTimeout) {
       clearTimeout(this.speechTimeout);
       this.speechTimeout = null;
+    }
+
+    if (this.vieneuAudio) {
+      try {
+        this.vieneuAudio.pause();
+        this.vieneuAudio.currentTime = 0;
+      } catch {}
+      this.vieneuAudio = null;
     }
 
     if ('speechSynthesis' in window) {
@@ -413,12 +464,11 @@ class AtelierAudioSystem {
       return;
     }
 
-    // Smooth luxury fade-out
     try {
       const now = this.ctx.currentTime;
       prevGain.gain.cancelScheduledValues(now);
       prevGain.gain.setValueAtTime(Math.max(0.0001, prevGain.gain.value), now);
-      prevGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+      prevGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
     } catch {}
 
     setTimeout(() => {
@@ -441,7 +491,7 @@ class AtelierAudioSystem {
           prevGain.disconnect();
         } catch {}
       }
-    }, 550);
+    }, 450);
   }
 }
 

@@ -266,20 +266,15 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-[92vw] max-w-lg text-center"
+            className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-[92vw] max-w-xl text-center"
           >
-            <div className="inline-flex flex-col items-center gap-1 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl sm:rounded-full bg-black/80 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.7)] text-center">
-              <div className="flex items-center gap-2">
+            <div className="inline-flex flex-col items-center gap-1 px-5 sm:px-7 py-2.5 sm:py-3 rounded-2xl sm:rounded-full bg-black/85 backdrop-blur-md border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center">
+              <div className="flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-[#FF424D] animate-ping flex-shrink-0" />
                 <p className="text-white text-xs sm:text-sm font-sans tracking-wide italic font-light">
-                  "{activeCaption.en}"
+                  "{activeCaption.vi || activeCaption.en}"
                 </p>
               </div>
-              {activeCaption.vi && (
-                <p className="text-white/65 text-[11px] sm:text-xs font-sans tracking-normal">
-                  {activeCaption.vi}
-                </p>
-              )}
             </div>
           </motion.div>
         )}
@@ -317,13 +312,13 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right: Interactive Luxury Atelier Soundscape & Voiceover Controls */}
+        {/* Right: Minimalist Audio Button (Speaker icon + 'Âm thanh') */}
         <div className="self-end sm:self-center">
           <button
             type="button"
             onClick={toggleAudio}
-            aria-label={isPlayingAudio ? 'Tắt âm thanh & lời thoại Atelier' : 'Bật âm thanh & lời thoại Atelier'}
-            className={`flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4 py-2 rounded-full backdrop-blur-md border transition-all duration-300 cursor-pointer text-xs font-medium shadow-lg min-h-[40px] touch-manipulation ${
+            aria-label={isPlayingAudio ? 'Tắt âm thanh' : 'Bật âm thanh'}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full backdrop-blur-md border transition-all duration-300 cursor-pointer text-xs font-medium shadow-lg min-h-[40px] touch-manipulation hover:scale-[1.02] ${
               isPlayingAudio
                 ? 'bg-[#FF424D]/90 border-[#FF424D] text-white shadow-[#FF424D]/30 ring-2 ring-[#FF424D]/50'
                 : 'bg-black/60 hover:bg-black/85 border-white/20 hover:border-white/50 text-white/90 hover:text-white'
@@ -331,30 +326,13 @@ export default function Hero() {
           >
             {isPlayingAudio ? (
               <>
-                <Volume2 size={15} className="animate-pulse flex-shrink-0" />
-                {/* Dynamic animated equalizer bars */}
-                <span className="flex items-end gap-0.5 h-3.5 px-0.5">
-                  <span className="w-0.5 h-full bg-white rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <span className="w-0.5 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <span className="w-0.5 h-3 bg-white rounded-full animate-bounce [animation-delay:-0.45s]" />
-                  <span className="w-0.5 h-1.5 bg-white rounded-full animate-bounce" />
-                </span>
-                <span className="text-[11px] sm:text-xs font-semibold tracking-tight">
-                  Âm thanh & Lời thoại Atelier
-                </span>
-                <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-mono uppercase tracking-wider">
-                  Bật
-                </span>
+                <Volume2 size={16} className="animate-pulse flex-shrink-0" />
+                <span>Âm thanh</span>
               </>
             ) : (
               <>
-                <VolumeX size={15} className="text-[#FF424D] flex-shrink-0" />
-                <span className="text-[11px] sm:text-xs tracking-tight">
-                  Bật âm thanh & lời thoại
-                </span>
-                <span className="text-[9px] bg-white/10 text-white/60 px-1.5 py-0.5 rounded-full font-mono uppercase tracking-wider">
-                  Tắt
-                </span>
+                <VolumeX size={16} className="text-[#FF424D] flex-shrink-0" />
+                <span>Âm thanh</span>
               </>
             )}
           </button>
