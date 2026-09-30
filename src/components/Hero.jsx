@@ -1,20 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles } from 'lucide-react';
 import { heroSupercars } from '../data/supercars';
-import { engineAudio } from '../utils/engineAudio';
+import { atelierAudio } from '../utils/atelierAudio';
 
 export default function Hero() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [activeCaption, setActiveCaption] = useState(null);
   const activeVideoRef = useRef(null);
   const currentCar = heroSupercars[activeIndex];
   const prevCarIdRef = useRef(currentCar.id);
-
-  const getAudioTypeForCar = (carId) => {
-    if (carId === 'ferrari-f8' || carId === 'g63-amg') return 'v8';
-    return 'flat6';
-  };
 
   const handlePrev = useCallback(() => {
     if (activeVideoRef.current) {
@@ -40,31 +36,33 @@ export default function Hero() {
     });
   }, []);
 
-  // Update engine audio when car changes IF audio is playing (without double-start churn)
+  // Subscribe to real-time speech narration captions & cleanup on unmount
+  useEffect(() => {
+    atelierAudio.setCaptionListener((caption) => {
+      setActiveCaption(caption);
+    });
+    return () => {
+      atelierAudio.stop(true);
+    };
+  }, []);
+
+  // Introduce vehicle dynamically when active supercar changes
   useEffect(() => {
     if (prevCarIdRef.current !== currentCar.id) {
       prevCarIdRef.current = currentCar.id;
       if (isPlayingAudio) {
-        const type = getAudioTypeForCar(currentCar.id);
-        engineAudio.start(type);
+        atelierAudio.announceCar(currentCar);
       }
     }
-  }, [currentCar.id, isPlayingAudio]);
-
-  // Clean up audio on unmount
-  useEffect(() => {
-    return () => {
-      engineAudio.stop(true);
-    };
-  }, []);
+  }, [currentCar, isPlayingAudio]);
 
   const toggleAudio = () => {
     if (isPlayingAudio) {
-      engineAudio.stop();
+      atelierAudio.stop();
       setIsPlayingAudio(false);
+      setActiveCaption(null);
     } else {
-      const type = getAudioTypeForCar(currentCar.id);
-      engineAudio.start(type);
+      atelierAudio.start();
       setIsPlayingAudio(true);
     }
   };
@@ -102,14 +100,14 @@ export default function Hero() {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         if (isPlayingAudio) {
-          engineAudio.suspend();
+          atelierAudio.suspend();
         }
       } else {
         if (activeVideoRef.current && activeVideoRef.current.paused && !activeVideoRef.current.ended) {
           activeVideoRef.current.play().catch(() => {});
         }
         if (isPlayingAudio) {
-          engineAudio.resume();
+          atelierAudio.resume();
         }
       }
     };
@@ -260,7 +258,34 @@ export default function Hero() {
 
       </div>
 
-      {/* 4. RESPONSIVE BOTTOM TOOLBAR (Down Arrow + Carousel Indicators + Engine Audio Controls) */}
+      {/* 4. CINEMATIC VOICE SUBTITLE BANNER */}
+      <AnimatePresence>
+        {isPlayingAudio && activeCaption && (
+          <motion.div
+            initial={{ opacity: 0, y: 15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-[92vw] max-w-lg text-center"
+          >
+            <div className="inline-flex flex-col items-center gap-1 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl sm:rounded-full bg-black/80 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.7)] text-center">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#FF424D] animate-ping flex-shrink-0" />
+                <p className="text-white text-xs sm:text-sm font-sans tracking-wide italic font-light">
+                  "{activeCaption.en}"
+                </p>
+              </div>
+              {activeCaption.vi && (
+                <p className="text-white/65 text-[11px] sm:text-xs font-sans tracking-normal">
+                  {activeCaption.vi}
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 5. RESPONSIVE BOTTOM TOOLBAR (Down Arrow + Carousel Indicators + Atelier Audio Controls) */}
       <div className="relative z-30 pointer-events-auto mt-auto px-4 sm:px-10 lg:px-16 pb-6 sm:pb-8 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
         
         {/* Left: Scroll Down Arrow & Carousel Ticker Dots */}
@@ -292,16 +317,16 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right: Interactive Engine Acoustic Audio Controls (R2 Requirement) */}
+        {/* Right: Interactive Luxury Atelier Soundscape & Voiceover Controls */}
         <div className="self-end sm:self-center">
           <button
             type="button"
             onClick={toggleAudio}
-            aria-label={isPlayingAudio ? 'Tắt âm thanh động cơ' : 'Bật âm thanh động cơ'}
-            className={`flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-2 rounded-full backdrop-blur-md border transition-all duration-300 cursor-pointer text-xs font-medium shadow-lg min-h-[40px] touch-manipulation ${
+            aria-label={isPlayingAudio ? 'Tắt âm thanh & lời thoại Atelier' : 'Bật âm thanh & lời thoại Atelier'}
+            className={`flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4 py-2 rounded-full backdrop-blur-md border transition-all duration-300 cursor-pointer text-xs font-medium shadow-lg min-h-[40px] touch-manipulation ${
               isPlayingAudio
                 ? 'bg-[#FF424D]/90 border-[#FF424D] text-white shadow-[#FF424D]/30 ring-2 ring-[#FF424D]/50'
-                : 'bg-black/50 hover:bg-black/75 border-white/20 text-white/80 hover:text-white'
+                : 'bg-black/60 hover:bg-black/85 border-white/20 hover:border-white/50 text-white/90 hover:text-white'
             }`}
           >
             {isPlayingAudio ? (
@@ -315,14 +340,20 @@ export default function Hero() {
                   <span className="w-0.5 h-1.5 bg-white rounded-full animate-bounce" />
                 </span>
                 <span className="text-[11px] sm:text-xs font-semibold tracking-tight">
-                  Âm thanh {currentCar.id === 'porsche-gt3' ? 'Boxer 6' : 'Twin-Turbo V8'}
+                  Âm thanh & Lời thoại Atelier
+                </span>
+                <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-mono uppercase tracking-wider">
+                  Bật
                 </span>
               </>
             ) : (
               <>
                 <VolumeX size={15} className="text-[#FF424D] flex-shrink-0" />
                 <span className="text-[11px] sm:text-xs tracking-tight">
-                  Bật âm thanh động cơ
+                  Bật âm thanh & lời thoại
+                </span>
+                <span className="text-[9px] bg-white/10 text-white/60 px-1.5 py-0.5 rounded-full font-mono uppercase tracking-wider">
+                  Tắt
                 </span>
               </>
             )}
