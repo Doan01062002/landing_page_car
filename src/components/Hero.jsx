@@ -1,16 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX } from 'lucide-react';
 import { heroSupercars } from '../data/supercars';
-import { atelierAudio } from '../utils/atelierAudio';
 
 export default function Hero() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [activeCaption, setActiveCaption] = useState(null);
   const activeVideoRef = useRef(null);
   const currentCar = heroSupercars[activeIndex];
-  const prevCarIdRef = useRef(currentCar.id);
 
   const handlePrev = useCallback(() => {
     if (activeVideoRef.current) {
@@ -35,37 +30,6 @@ export default function Hero() {
       return nextIdx;
     });
   }, []);
-
-  // Subscribe to real-time speech narration captions & cleanup on unmount
-  useEffect(() => {
-    atelierAudio.setCaptionListener((caption) => {
-      setActiveCaption(caption);
-    });
-    return () => {
-      atelierAudio.stop(true);
-    };
-  }, []);
-
-  // Introduce vehicle dynamically when active supercar changes
-  useEffect(() => {
-    if (prevCarIdRef.current !== currentCar.id) {
-      prevCarIdRef.current = currentCar.id;
-      if (isPlayingAudio) {
-        atelierAudio.announceCar(currentCar);
-      }
-    }
-  }, [currentCar, isPlayingAudio]);
-
-  const toggleAudio = () => {
-    if (isPlayingAudio) {
-      atelierAudio.stop();
-      setIsPlayingAudio(false);
-      setActiveCaption(null);
-    } else {
-      atelierAudio.start();
-      setIsPlayingAudio(true);
-    }
-  };
 
   // Auto-advance safety fallback: only advances if video stalls or fails to play
   useEffect(() => {
@@ -95,25 +59,18 @@ export default function Hero() {
     };
   }, [activeIndex, handleNext]);
 
-  // Resume video & audio playback when tab becomes visible again, suspend when hidden
+  // Resume video playback when tab becomes visible again
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        if (isPlayingAudio) {
-          atelierAudio.suspend();
-        }
-      } else {
+      if (!document.hidden) {
         if (activeVideoRef.current && activeVideoRef.current.paused && !activeVideoRef.current.ended) {
           activeVideoRef.current.play().catch(() => {});
-        }
-        if (isPlayingAudio) {
-          atelierAudio.resume();
         }
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isPlayingAudio]);
+  }, []);
 
   const handleVideoEnded = useCallback((e) => {
     if (e.currentTarget === activeVideoRef.current) {
@@ -258,30 +215,8 @@ export default function Hero() {
 
       </div>
 
-      {/* 4. CINEMATIC VOICE SUBTITLE BANNER */}
-      <AnimatePresence>
-        {isPlayingAudio && activeCaption && (
-          <motion.div
-            initial={{ opacity: 0, y: 15, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-[92vw] max-w-xl text-center"
-          >
-            <div className="inline-flex flex-col items-center gap-1 px-5 sm:px-7 py-2.5 sm:py-3 rounded-2xl sm:rounded-full bg-black/85 backdrop-blur-md border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-[#FF424D] animate-ping flex-shrink-0" />
-                <p className="text-white text-xs sm:text-sm font-sans tracking-wide italic font-light">
-                  "{activeCaption.vi}"
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 5. RESPONSIVE BOTTOM TOOLBAR (Down Arrow + Carousel Indicators + Atelier Audio Controls) */}
-      <div className="relative z-30 pointer-events-auto mt-auto px-4 sm:px-10 lg:px-16 pb-6 sm:pb-8 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+      {/* 4. RESPONSIVE BOTTOM TOOLBAR (Down Arrow + Carousel Indicators) */}
+      <div className="relative z-30 pointer-events-auto mt-auto px-4 sm:px-10 lg:px-16 pb-6 sm:pb-8 flex items-center justify-between gap-4 select-none">
         
         {/* Left: Scroll Down Arrow & Carousel Ticker Dots */}
         <div className="flex items-center gap-4 sm:gap-6 self-start sm:self-center">
@@ -310,32 +245,6 @@ export default function Hero() {
               />
             ))}
           </div>
-        </div>
-
-        {/* Right: Minimalist Audio Button (Speaker icon + 'Âm thanh') */}
-        <div className="self-end sm:self-center">
-          <button
-            type="button"
-            onClick={toggleAudio}
-            aria-label={isPlayingAudio ? 'Tắt âm thanh' : 'Bật âm thanh'}
-            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full backdrop-blur-md border transition-all duration-300 cursor-pointer text-xs font-medium shadow-lg min-h-[40px] touch-manipulation hover:scale-[1.02] ${
-              isPlayingAudio
-                ? 'bg-[#FF424D]/90 border-[#FF424D] text-white shadow-[#FF424D]/30 ring-2 ring-[#FF424D]/50'
-                : 'bg-black/60 hover:bg-black/85 border-white/20 hover:border-white/50 text-white/90 hover:text-white'
-            }`}
-          >
-            {isPlayingAudio ? (
-              <>
-                <Volume2 size={16} className="animate-pulse flex-shrink-0" />
-                <span>Âm thanh</span>
-              </>
-            ) : (
-              <>
-                <VolumeX size={16} className="text-[#FF424D] flex-shrink-0" />
-                <span>Âm thanh</span>
-              </>
-            )}
-          </button>
         </div>
 
       </div>
