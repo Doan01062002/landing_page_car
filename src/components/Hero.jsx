@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { heroSupercars } from '../data/supercars';
 import { atelierAudio } from '../utils/atelierAudio';
 
@@ -272,7 +272,7 @@ export default function Hero() {
               <div className="flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-[#FF424D] animate-ping flex-shrink-0" />
                 <p className="text-white text-xs sm:text-sm font-sans tracking-wide italic font-light">
-                  "{activeCaption.vi || activeCaption.en}"
+                  "{activeCaption.vi}"
                 </p>
               </div>
             </div>
